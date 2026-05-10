@@ -59,6 +59,31 @@ def chat(message):
 if __name__ == "__main__":
     print("Bot is starting...")
     bot.infinity_polling()
+# ── Bot Logic ──────────────────────────────────────────────────────────────────
+
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    bot.reply_to(message, "🌟 অল-ইন-ওয়ান সুপার এআই চালু হয়েছে!\nযেকোনো প্রশ্ন করুন বাংলায়।")
+
+@bot.message_handler(func=lambda m: True)
+def chat(message):
+    global _last_heartbeat
+    _last_heartbeat = time.time()
+    
+    # Only Admin or anyone? If only Admin, keep the next 2 lines:
+    # if message.from_user.id != ADMIN_ID:
+    #    return
+
+    try:
+        response = client.models.generate_content(model=MODEL, contents=message.text)
+        bot.reply_to(message, response.text)
+    except Exception as e:
+        bot.reply_to(message, f"❌ ত্রুটি: {str(e)}")
+
+# ── Start Polling ─────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("Bot is starting...")
+    bot.infinity_polling()
 
 # ── Keep-alive server (extracted to keep_alive.py) ───────────────────────────
 keep_alive()   # starts Flask on port 8000 as a daemon thread
