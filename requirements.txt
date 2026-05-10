@@ -1,1 +1,10 @@
+pyTelegramBotAPI
+google-generativeai
+flask
+requests
+yt-dlp
+qrcode
+img2pdf
+edge-tts
+duckduckgo-search
 
