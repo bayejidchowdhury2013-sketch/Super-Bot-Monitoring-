@@ -19,21 +19,46 @@ from keep_alive import keep_alive
 # ── Credentials ───────────────────────────────────────────────────────────────
 GEMINI_API_KEY     = os.environ.get("GEMINI_API_KEY", "")
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-REPLIT_DB_URL      = os.environ.get("REPLIT_DB_URL", "")
 ADMIN_ID           = 5146044905
 
 if not GEMINI_API_KEY or not TELEGRAM_BOT_TOKEN:
-    raise RuntimeError("GEMINI_API_KEY এবং TELEGRAM_BOT_TOKEN সিক্রেট সেট করা নেই।")
+    print("Error: GEMINI_API_KEY and TELEGRAM_BOT_TOKEN must be set in Render Environment.")
 
+# New Google GenAI Client
 client          = genai.Client(api_key=GEMINI_API_KEY)
 bot             = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 MODEL           = "gemini-2.0-flash"
-BOT_START       = time.time()     # recorded at import — used for uptime
-_last_heartbeat = time.time()     # updated on every incoming message — watchdog uses this
+BOT_START       = time.time()
+_last_heartbeat = time.time()
 
-# ── Voice config — edge-tts male voices ──────────────────────────────────────
-VOICE_BN = "bn-BD-PradeepNeural"   # Male — Bangladesh Bengali
-VOICE_EN = "en-US-GuyNeural"       # Male — English (fallback)
+# ── Keep-alive server ──────────────────────────────────────────────────────────
+keep_alive() 
+
+# ── Bot Logic ──────────────────────────────────────────────────────────────────
+
+@bot.message_handler(commands=['start'])
+def welcome(message):
+    bot.reply_to(message, "🌟 অল-ইন-ওয়ান সুপার এআই চালু হয়েছে!\nযেকোনো প্রশ্ন করুন বাংলায়।")
+
+@bot.message_handler(func=lambda m: True)
+def chat(message):
+    global _last_heartbeat
+    _last_heartbeat = time.time()
+    
+    # Only Admin or anyone? If only Admin, keep the next 2 lines:
+    # if message.from_user.id != ADMIN_ID:
+    #    return
+
+    try:
+        response = client.models.generate_content(model=MODEL, contents=message.text)
+        bot.reply_to(message, response.text)
+    except Exception as e:
+        bot.reply_to(message, f"❌ ত্রুটি: {str(e)}")
+
+# ── Start Polling ─────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    print("Bot is starting...")
+    bot.infinity_polling()
 
 # ── Keep-alive server (extracted to keep_alive.py) ───────────────────────────
 keep_alive()   # starts Flask on port 8000 as a daemon thread
