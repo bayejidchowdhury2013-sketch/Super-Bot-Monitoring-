@@ -4,30 +4,25 @@ import os
 from flask import Flask
 from threading import Thread
 
-# সরাসরি আপনার টোকেন ও কি
 bot = telebot.TeleBot('8465423787:AAF2IRkZqvYfLIYSqIhNVUzFR4s53MDybpI')
 genai.configure(api_key='AIzaSyBXwqLvgPKvrU393u0tl3VkxE1HCQdZyPg')
 model = genai.GenerativeModel('gemini-1.5-flash')
 
 app = Flask('')
 @app.route('/')
-def home():
-    return "Bot is Running!"
+def home(): return "Bot is Online!"
 
 def run():
-    port = int(os.environ.get('PORT', 10000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
 
 @bot.message_handler(func=lambda m: True)
 def chat(message):
     try:
-        response = model.generate_content(message.text)
-        bot.reply_to(message, response.text)
-    except Exception as e:
-        print(f"Error: {e}")
+        res = model.generate_content(message.text)
+        bot.reply_to(message, res.text)
+    except: pass
 
 if __name__ == "__main__":
-    t = Thread(target=run)
-    t.start()
-    print("Bot is starting...")
+    Thread(target=run).start()
     bot.infinity_polling()
+    
